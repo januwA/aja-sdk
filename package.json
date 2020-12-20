@@ -1,0 +1,57 @@
+{
+  "name": "aja-sdk",
+  "version": "0.0.1",
+  "description": "框架开发工具包",
+  "private": false,
+  "main": "./dist/aja-sdk.js",
+  "module": "./src/aja-sdk/index.ts",
+  "types": "./dist/src/aja-sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/aja-sdk.js",
+      "require": "./dist/aja-sdk.js"
+    },
+    "./mobx": {
+      "import": "./dist/mobx.js",
+      "require": "./dist/mobx.js"
+    },
+    "./htmlAst": {
+      "import": "./dist/html-ast.js",
+      "require": "./dist/html-ast.js"
+    },
+    "./utils": {
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.js"
+    }
+  },
+  "scripts": {
+    "build": "webpack --config __config__/webpack/prod.config.js",
+    "watch": "webpack --config __config__/webpack/dev.config.js --watch",
+    "start": "node __config__/webpack/dev-server.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "aja-sdk"
+  ],
+  "author": "Ajanuw",
+  "license": "MIT",
+  "homepage": "https://github.com/januwA/aja-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/januwA/aja-sdk.git"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.19",
+    "clean-webpack-plugin": "^3.0.0",
+    "jest": "^26.6.3",
+    "terser-webpack-plugin": "^5.0.3",
+    "ts-jest": "^26.4.4",
+    "ts-loader": "^8.0.12",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3",
+    "webpack": "^5.11.0",
+    "webpack-cli": "^4.2.0",
+    "webpack-copy-file-plugin": "^0.1.5"
+  },
+  "dependencies": {}
+}
