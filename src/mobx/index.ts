@@ -1,4 +1,4 @@
-import { AnyObject, Type } from "~src/interfaces";
+import { AnyObject } from "~src/interfaces";
 
 let _subscriber: any;
 
@@ -26,7 +26,7 @@ class Observer {
     }
   }
 
-  // 通知订阅者
+  // 属性更改后，通知订阅者
   publish() {
     this._list.forEach((it) => it());
   }
@@ -34,10 +34,7 @@ class Observer {
 
 export interface Iobservable {
   (value: AnyObject): AnyObject;
-
   value(value: string | number | null): { value: any };
-
-  cls<T extends AnyObject>(cls: Type<T>, create?: (cls: Type<T>) => T): T;
 }
 
 /**
@@ -63,98 +60,59 @@ export const observable: Iobservable = function observable(data: AnyObject) {
     o.set(key, new Observer());
   }
 
-  const proxy = new Proxy(data, {
-    // 访问时添加订阅者
+  /**
+   * 递归获取
+   * @param target
+   * @param key
+   */
+  function getOwnPropertyDescriptor(
+    target: AnyObject,
+    key: any
+  ): PropertyDescriptor | undefined {
+    if (!(key in target)) return;
+    const des = Object.getOwnPropertyDescriptor(target, key);
+    if (des) return des;
+    return getOwnPropertyDescriptor(Object.getPrototypeOf(target), key);
+  }
+
+  const proxy: AnyObject = new Proxy(data, {
     get(target: AnyObject, key: string) {
+      // 访问时添加订阅者
       if (_subscriber) o.get(key)?.add();
+
+      // 绑定函数this
+      const des = getOwnPropertyDescriptor(target, key);
+
+      if (des?.value && typeof des.value === "function") {
+        return des.value.bind(proxy);
+      }
+
+      if (des?.get) {
+        return des.get.call(proxy);
+      }
+
       return target[key];
     },
 
-    // 改变时通知所有订阅者
     set(target: AnyObject, key: string, value: any) {
       if (value === target[key]) return false;
-      target[key] = value;
+
+      const des = getOwnPropertyDescriptor(target, key);
+      if (des?.set) {
+        des.set.call(proxy, value);
+      } else {
+        target[key] = value;
+      }
+
+      // 值改变后通知所有订阅者
       o.get(key)?.publish();
       return true;
     },
   });
-
-  for (const key in data) {
-    const des = Object.getOwnPropertyDescriptor(data, key);
-
-    if (des?.value && typeof des.value === "function") {
-      data[key] = des.value.bind(proxy);
-    }
-
-    // 绑定getter的this
-    if (des?.get) {
-      Object.defineProperty(proxy, key, {
-        get: des.get?.bind(proxy),
-        configurable: des.configurable,
-        enumerable: des.configurable,
-      });
-    }
-
-    // 绑定setter的this
-    if (des?.set) {
-      Object.defineProperty(proxy, key, {
-        set: des.set?.bind(proxy),
-        configurable: des.configurable,
-        enumerable: des.configurable,
-      });
-    }
-  }
 
   return proxy;
 };
 
 observable.value = function value<T>(value: T) {
   return observable({ value: value }) as { value: T };
-};
-
-observable.cls = function cls<T>(
-  value: Type<T>,
-  create?: (cls: Type<T>) => T
-): T {
-  const context = create ? create(value) : new value();
-
-  const data: AnyObject = {};
-  for (const key in context) {
-    data[key] = context[key];
-  }
-
-  // 获取原型
-  const proto = Object.getPrototypeOf(context);
-
-  // 确保 instanceof 不会改变
-  Object.setPrototypeOf(data, proto);
-
-  // 获取原型上的属性
-  const protoNames = Object.getOwnPropertyNames(proto);
-
-  // 将原型上的属性全部拷贝到data上去
-  for (const key of protoNames) {
-    const des = Object.getOwnPropertyDescriptor(proto, key);
-    if (des?.value) {
-      data[key] = des.value;
-    }
-
-    if (des?.get) {
-      Object.defineProperty(data, key, {
-        get: des.get,
-        enumerable: true,
-        configurable: true,
-      });
-    }
-
-    if (des?.set) {
-      Object.defineProperty(data, key, {
-        set: des.set,
-        enumerable: true,
-        configurable: true,
-      });
-    }
-  }
-
-  return observable(data) as T;
 };

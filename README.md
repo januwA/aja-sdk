@@ -1,5 +1,3 @@
-## aja-sdk 框架开发工具包
-
 ## require
 ```js
 const sdk = require('aja-sdk')

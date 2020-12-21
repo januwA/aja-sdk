@@ -75,21 +75,24 @@ describe("test observable", () => {
     expect(proxy.message).toBe("hello world");
     expect(count).toBe(2);
   });
-});
 
-describe("test observable.value", () => {
-  it("test mobx", () => {
-    const proxy = observable.value("ajanuw");
+  it("test class data", () => {
+    class User {
+      name = "suou";
+    }
+
+    const proxy = observable({
+      name: "ajanuw",
+      data: new User(),
+    });
     let value;
     autorun(() => {
-      value = proxy.value;
+      value = proxy.data.name;
     });
-    proxy.value = "Ajanuw";
-    expect(value).toBe(proxy.value);
+    proxy.data.name = "x";
+    expect(value).toBe("x");
   });
-});
 
-describe("test observable.cls", () => {
   it("test class", () => {
     class User {
       name: string = "suou";
@@ -98,7 +101,7 @@ describe("test observable.cls", () => {
       }
     }
 
-    const proxy = observable.cls<User>(User);
+    const proxy = observable(new User());
     let value;
     autorun(() => {
       value = proxy.name;
@@ -112,16 +115,14 @@ describe("test observable.cls", () => {
     class User {
       name: string = "suou";
       change() {
-        expect(this instanceof User).toBe(true);
         this.name = "Ajanuw";
       }
       get message() {
-        expect(this instanceof User).toBe(true);
         return "hello " + this.name;
       }
     }
 
-    const proxy = observable.cls<User>(User);
+    const proxy = observable(new User());
     let value;
     let count = 0;
     autorun(() => {
@@ -132,6 +133,18 @@ describe("test observable.cls", () => {
     c();
     expect(value).toBe("hello Ajanuw");
     expect(count).toBe(2);
+  });
+});
+
+describe("test observable.value", () => {
+  it("test mobx", () => {
+    const proxy = observable.value("ajanuw");
+    let value;
+    autorun(() => {
+      value = proxy.value;
+    });
+    proxy.value = "Ajanuw";
+    expect(value).toBe(proxy.value);
   });
 });
 
