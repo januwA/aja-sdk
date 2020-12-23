@@ -1,4 +1,4 @@
-import { autorun, observable } from "../src/mobx";
+import { autorun, observable, extendObservable } from "../src/mobx";
 
 describe("test observable", () => {
   it("test main", () => {
@@ -177,5 +177,43 @@ describe("test autorun", () => {
     });
     proxy.name = "suou";
     expect(value).toBe("suou");
+  });
+});
+
+describe("test extendObservable", () => {
+  it("test main", () => {
+    const proxy = observable({ name: "ajanuw" });
+    const newData: any = {
+      age: 1,
+      get message(): string {
+        return `${this.name}, ${this.age}`;
+      },
+    };
+    const newProxy = extendObservable(proxy, newData);
+
+    let value;
+    autorun(() => {
+      value = newProxy.message;
+    });
+    expect(value).toBe("ajanuw, 1");
+  });
+
+  it("test class", () => {
+    const proxy = observable({ name: "ajanuw" });
+
+    class User {
+      age = 1;
+      name?: string;
+      get message(): string {
+        return `${this.name}, ${this.age}`;
+      }
+    }
+    const newProxy = extendObservable(proxy, new User(), true);
+
+    let value;
+    autorun(() => {
+      value = newProxy.message;
+    });
+    expect(value).toBe("ajanuw, 1");
   });
 });

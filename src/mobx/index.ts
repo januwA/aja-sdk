@@ -116,3 +116,72 @@ export const observable: Iobservable = function observable(data: AnyObject) {
 observable.value = function value<T>(value: T) {
   return observable({ value: value }) as { value: T };
 };
+
+/**
+ * 将所有enumerable=false的属性，转为true
+ * @param cls 
+ */
+export function class2Object(cls: AnyObject): AnyObject {
+  const r: AnyObject = {};
+  const proto = Object.getPrototypeOf(cls);
+  for (const key in cls) r[key] = cls[key];
+
+  const propDes = Object.getOwnPropertyDescriptors(proto);
+  for (const key in propDes) {
+    const des = propDes[key];
+    if (des?.value) {
+      Object.defineProperty(r, key, {
+        value: des.value,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
+    }
+    if (des?.get) {
+      Object.defineProperty(r, key, {
+        get: des.get,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+    if (des?.set) {
+      Object.defineProperty(r, key, {
+        set: des.set,
+        enumerable: true,
+        configurable: true,
+      });
+    }
+  }
+
+  Object.setPrototypeOf(r, proto);
+  return r;
+}
+
+export function extendObservable(
+  proxy: AnyObject,
+  obj: AnyObject,
+  isClass: boolean = false
+): AnyObject {
+  if (isClass) obj = class2Object(obj);
+
+  // 只能映射enumerable=true的属性
+  for (const key in obj) {
+    const des = Object.getOwnPropertyDescriptor(obj, key);
+    if (des?.value) {
+      proxy[key] = des.value;
+    }
+
+    if (des?.get) {
+      Object.defineProperty(proxy, key, {
+        get: des.get,
+      });
+    }
+
+    if (des?.set) {
+      Object.defineProperty(proxy, key, {
+        set: des.set,
+      });
+    }
+  }
+  return proxy;
+}
